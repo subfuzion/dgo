@@ -1,7 +1,5 @@
 # Go development environment with bells and whistles.
 #
-# docker build -f Dockerfile.dev -t godocker .
-#
 #============================
 FROM debian:stretch as build
 #============================
@@ -17,8 +15,9 @@ FROM debian:stretch as build
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 ARG APTARGS="-yq --no-install-recommends install"
-RUN apt-get ${APTARGS} apt-transport-https
 RUN apt-get ${APTARGS} apt-utils
+
+RUN apt-get ${APTARGS} apt-transport-https
 RUN apt-get ${APTARGS} autoconf
 RUN apt-get ${APTARGS} automake
 RUN apt-get ${APTARGS} build-essential
@@ -87,7 +86,7 @@ RUN add-apt-repository \
        $(lsb_release -cs) \
        stable"
 RUN apt-get update && apt-get ${APTARGS} docker-ce
-RUN echo $(which docker)
+COPY modprobe.sh /usr/local/bin/modprobe
 
 #============================
 from debian:stretch
@@ -99,9 +98,10 @@ ENV GOPATH=/go
 ENV CGO_LDFLAGS=-L/lib
 ENV PROTOC_VERSION=3.5.1
 
-COPY --from=build /usr/local/bin /usr/local/bin
+COPY --from=build /usr/local/bin/ /usr/local/bin
 COPY --from=build /usr/local/go /usr/local/go
 COPY --from=build /usr/bin/docker /usr/bin/docker
+COPY --from=build /usr/lib/docker/ /usr/lib/docker
 
 WORKDIR /go
 RUN mkdir -p /go/bin /go/pkg /go/src
